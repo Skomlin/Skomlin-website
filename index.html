@@ -332,6 +332,7 @@ footer.colophon{
 .colophon .clinks{display:flex; gap:18px; font-variant:small-caps; letter-spacing:0.06em; font-size:0.85rem;}
 .colophon .clinks a:hover{color:var(--crimson);}
 
+.hp-field{position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;}
 .hidden{display:none !important;}
 @media (max-width:600px){
   .hero{padding:56px 18px 44px;}
@@ -411,6 +412,8 @@ footer.colophon{
 
 <main id="app"></main>
 
+<iframe name="skomlin-sink" title="Form submission target" aria-hidden="true" tabindex="-1" style="display:none; width:0; height:0; border:0;"></iframe>
+
 <footer class="colophon">
   <div class="wrap">
     <svg class="seal" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -424,13 +427,15 @@ footer.colophon{
     <div class="cl">Set in EB Garamond. World literature in translation, printed on demand.</div>
     <div style="width:100%; max-width:480px; margin-top:4px;">
       <div class="eyebrow" style="margin-bottom:10px;">New titles &amp; reading notes</div>
-      <form class="signup-form" data-ctx="reader" onsubmit="return handleSignup(event)" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
-        <input type="email" id="sf-email-reader" required placeholder="your@email.com" style="padding:10px 12px; border:1px solid var(--rule); border-radius:2px; font-family:inherit; font-size:0.95rem; background:var(--white); color:var(--slate); flex:1; min-width:180px;">
+      <form class="signup-form" data-ctx="reader" method="POST" target="skomlin-sink" action="https://ed600acc.sibforms.com/serve/MUIFAPIui-LYJQYC8j5i97A4hh5LfBwdReh5On1MIe7CXMI8qS5X969I1iSeKLSjP9-w7bHR7_4QuVlGZUugWEGrZhEy17553aYqIEhT0UsLE37GNutjnzC5dl5aD1A_yuSMEBbKmcQNjBnzkAnPgrx5M8PyXncLyNU0ySStQs9vnP62acevZEx-aq5bg008B6A4xOnGNmgEz8-UdA==" onsubmit="return handleSignup(event)" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+        <input type="email" id="sf-email-reader" name="EMAIL" required placeholder="your@email.com" style="padding:10px 12px; border:1px solid var(--rule); border-radius:2px; font-family:inherit; font-size:0.95rem; background:var(--white); color:var(--slate); flex:1; min-width:180px;">
+        <input class="hp-field" type="text" name="email_address_check" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="hidden" name="locale" value="en">
         <button type="submit" class="btn btn-primary" style="border:none; padding:10px 22px; white-space:nowrap;">Subscribe</button>
       </form>
       <div class="confirm" id="confirm-reader">
         <div class="tick">&#10003;</div>
-        <div style="color:var(--slate-light); font-size:0.92rem;">You're subscribed. We'll let you know about new titles.</div>
+        <div style="color:var(--slate-light); font-size:0.92rem;">Almost there. Check your email and click the confirmation link.</div>
       </div>
     </div>
     <div class="clinks">
@@ -745,82 +750,51 @@ function renderContributorDetail(slug){
   `;
 }
 
+const TRADE_FORM_ACTION = 'https://ed600acc.sibforms.com/serve/MUIFAKoObqmj29mC9g8958g5c7HArpt-dN8N4mxNYcGP1yBPODT2_KWJkoSnFzzjppiPGpWaI03mnq9X_mqFnuTcDonTbxmmm4FYHj5UqCTgMPnotarxS4r_GrcITTofSc6DgSG65Ljv7hpAwfwC299i6_1BVaaFA0b5g-j7PlROYAxpsl7w3hqrlkgE602d-G0fSUl14zTIibhISw==';
+
 function signupFormHTML(ctx){
   return `
-    <form class="signup-form" data-ctx="${ctx}" onsubmit="return handleSignup(event)">
+    <form class="signup-form" data-ctx="${ctx}" method="POST" target="skomlin-sink" action="${TRADE_FORM_ACTION}" onsubmit="return handleSignup(event)">
       <div class="field">
         <label for="sf-store-${ctx}">Bookshop Name</label>
-        <input type="text" id="sf-store-${ctx}" required placeholder="e.g. Shakespeare and Company">
+        <input type="text" id="sf-store-${ctx}" name="STORE" required placeholder="e.g. Shakespeare and Company">
       </div>
       <div class="field">
         <label for="sf-name-${ctx}">Contact Name</label>
-        <input type="text" id="sf-name-${ctx}" required placeholder="Your name">
+        <input type="text" id="sf-name-${ctx}" name="FIRSTNAME" required placeholder="Your name">
       </div>
       <div class="field">
         <label for="sf-email-${ctx}">Email</label>
-        <input type="email" id="sf-email-${ctx}" required placeholder="you@bookshop.com">
+        <input type="email" id="sf-email-${ctx}" name="EMAIL" required placeholder="you@bookshop.com">
       </div>
       <div class="field">
         <label for="sf-city-${ctx}">City / Country</label>
-        <input type="text" id="sf-city-${ctx}" placeholder="e.g. Paris, France">
+        <input type="text" id="sf-city-${ctx}" name="CITY" placeholder="e.g. Paris, France">
       </div>
+      <input class="hp-field" type="text" name="email_address_check" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <input type="hidden" name="locale" value="en">
       <button type="submit" class="btn btn-primary" style="width:100%; border:none;">Join the Trade List</button>
       <div class="form-note">We'll only use this to share new titles, stockist terms, and sell-sheets. No spam, unsubscribe any time.</div>
     </form>
     <div class="confirm" id="confirm-${ctx}">
       <div class="tick">&#10003;</div>
-      <div class="small-caps" style="color:var(--crimson);">You're on the list</div>
-      <div style="color:var(--slate-light); font-size:0.92rem; margin-top:6px;">We'll be in touch with new titles and stockist terms.</div>
+      <div class="small-caps" style="color:var(--crimson);">One more step</div>
+      <div style="color:var(--slate-light); font-size:0.92rem; margin-top:6px;">Check your email and click the confirmation link to join the list.</div>
     </div>
   `;
 }
 
-async function handleSignup(e){
-  e.preventDefault();
-  const ctx = e.target.getAttribute('data-ctx');
-  const btn = e.target.querySelector('button[type="submit"]');
-  const origLabel = btn ? btn.textContent : '';
-  if(btn){ btn.disabled = true; btn.textContent = 'Submitting…'; }
-
-  const emailEl = e.target.querySelector('input[type="email"]');
-  const email = emailEl ? emailEl.value.trim() : '';
-
-  const isReader = (ctx === 'reader');
-  const listId = isReader ? 5 : 3;
-  const attrs = {};
-  if(!isReader){
-    const storeEl = e.target.querySelector('input[id^="sf-store-"]');
-    const nameEl  = e.target.querySelector('input[id^="sf-name-"]');
-    const cityEl  = e.target.querySelector('input[id^="sf-city-"]');
-    if(storeEl && storeEl.value.trim()) attrs.STORE     = storeEl.value.trim();
-    if(nameEl  && nameEl.value.trim())  attrs.FIRSTNAME = nameEl.value.trim();
-    if(cityEl  && cityEl.value.trim())  attrs.CITY      = cityEl.value.trim();
-  } else {
-    const nameEl = e.target.querySelector('input[id^="sf-name-"]');
-    if(nameEl && nameEl.value.trim()) attrs.FIRSTNAME = nameEl.value.trim();
-  }
-
-  try{
-    const res = await fetch('https://api.brevo.com/v3/contacts',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','api-key':'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'},
-      body: JSON.stringify({email, attributes: attrs, listIds:[listId], updateEnabled:true})
-    });
-    const ok = res.ok || res.status === 204;
-    if(!ok){
-      const data = await res.json().catch(()=>({}));
-      if(data.code !== 'duplicate_parameter') throw new Error(data.message || 'Request failed');
-    }
-    e.target.classList.add('hidden');
+function handleSignup(e){
+  const form = e.target;
+  const ctx = form.getAttribute('data-ctx');
+  const btn = form.querySelector('button[type="submit"]');
+  if(btn){ btn.disabled = true; btn.textContent = 'Submitting\u2026'; }
+  setTimeout(function(){
+    form.classList.add('hidden');
     const conf = document.getElementById('confirm-'+ctx);
     if(conf) conf.classList.add('show');
-  } catch(err){
-    if(btn){ btn.disabled = false; btn.textContent = origLabel; }
-    let errEl = e.target.querySelector('.form-error');
-    if(!errEl){ errEl = document.createElement('p'); errEl.className='form-error'; errEl.style.cssText='color:#c0392b;margin-top:10px;font-size:0.9rem;'; e.target.appendChild(errEl); }
-    errEl.textContent = 'Something went wrong — please try again or email us directly.';
-  }
-  return false;
+  }, 700);
+  return true;
 }
 
 function renderTrade(){
