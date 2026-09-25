@@ -46,19 +46,13 @@ def write(relpath, text):
 
 # ---------------------------------------------------------------- seal
 
-def seal(cls="seal"):
-    beads = "".join(
-        '<circle cx="%.2f" cy="%.2f" r="0.9"/>' % (
-            50 + 44 * __import__("math").cos(i / 28 * 2 * 3.141592653589793),
-            50 + 44 * __import__("math").sin(i / 28 * 2 * 3.141592653589793))
-        for i in range(28))
-    return ('<svg class="%s" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-            '<circle cx="50" cy="50" r="47" fill="none" stroke="#8B1A1A" stroke-width="1.4"/>'
-            '<circle cx="50" cy="50" r="41" fill="none" stroke="#8B1A1A" stroke-width="1"/>'
-            '<g fill="#8B1A1A">%s</g>'
-            '<path d="M50 26c-9 0-16 8-16 20 0 15 10 24 16 28 6-4 16-13 16-28 0-12-7-20-16-20z" fill="none" stroke="#8B1A1A" stroke-width="1.6"/>'
-            '<path d="M35 40c-6-2-11 0-13 3M65 40c6-2 11 0 13 3M50 30v16M42 50c-3 4-9 5-13 3M58 50c3 4 9 5 13 3" stroke="#8B1A1A" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
-            '<circle cx="50" cy="41" r="2.1" fill="#8B1A1A"/></svg>') % (cls, beads)
+def logo(kind="eagle", cls="brand-mark"):
+    """The Skomlin mark. kind: eagle (bird only) or lockup (bird over SKOMLIN)."""
+    alt = "Skomlin Press" if kind == "lockup" else "The Skomlin eagle"
+    return ('<img class="%s" src="/assets/logo-%s.svg" alt="%s" width="%s" height="%s">'
+            % (cls, kind, alt, "616" if kind == "eagle" else "799",
+               "851" if kind == "eagle" else "911"))
+
 
 # ---------------------------------------------------------------- shell
 
@@ -103,6 +97,9 @@ def head(title, desc, canonical, image=None, image_alt=None, og_type="website", 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/assets/site.css">
 %(extra)s</head>
 <body>
@@ -129,7 +126,7 @@ def header(active=None):
 </header>
 
 <main>
-""" % (seal(), links)
+""" % (logo("eagle"), links)
 
 FOOTER = """</main>
 
@@ -137,8 +134,7 @@ FOOTER = """</main>
 
 <footer class="colophon">
   <div class="wrap">
-    %(seal)s
-    <div class="cw">Skomlin Press</div>
+    %(lockup)s
     <div class="cl">Set in EB Garamond. World literature in translation, printed on demand.</div>
     <div style="width:100%%; max-width:480px; margin-top:4px;">
       <div class="eyebrow" style="margin-bottom:10px;">New titles &amp; reading notes</div>
@@ -169,7 +165,7 @@ FOOTER = """</main>
 """
 
 def footer():
-    return FOOTER % dict(seal=seal(), reader=READER_FORM)
+    return FOOTER % dict(lockup=logo("lockup", "colophon-mark"), reader=READER_FORM)
 
 def page(title, desc, canonical, body, active=None, image=None, image_alt=None,
          og_type="website", extra=""):
@@ -344,7 +340,7 @@ def build_home():
     <div class="form-card">%s</div>
   </div>
 </section>
-""" % (seal("seal seal-lg"), "".join(book_card(b) for b in featured), len(BOOKS), signup_form("home"))
+""" % (logo("eagle", "hero-mark"), "".join(book_card(b) for b in featured), len(BOOKS), signup_form("home"))
 
     ld = ('<script type="application/ld+json">%s</script>\n' % json.dumps({
         "@context": "https://schema.org", "@type": "Organization",
@@ -695,6 +691,14 @@ a.book-card{display:block; color:inherit; text-decoration:none;}
 .news-item p{margin:0 0 1em; line-height:1.75;}
 blockquote.review-quote{margin:30px 0;}
 .contrib-header h1{margin-bottom:4px;}
+.brand-mark{height:46px; width:auto; display:block; flex-shrink:0;}
+.hero-mark{height:112px; width:auto; display:block; margin:0 auto 24px;}
+.colophon-mark{height:84px; width:auto; display:block; margin:0 auto;}
+@media (max-width:600px){
+  .brand-mark{height:38px;}
+  .hero-mark{height:88px;}
+  .colophon-mark{height:70px;}
+}
 @media (max-width:820px){
   nav.main-nav{visibility:hidden;}
   nav.main-nav.open{visibility:visible;}
@@ -827,6 +831,11 @@ def main():
     shutil.copytree(os.path.join(HERE, "data"), os.path.join(OUT, "data"))
     shutil.copy(os.path.abspath(__file__), os.path.join(OUT, "build.py"))
     shutil.copy(os.path.join(HERE, "site.css.orig"), os.path.join(OUT, "site.css.orig"))
+    for f in ("logo-eagle.svg", "logo-lockup.svg"):
+        shutil.copy(os.path.join(HERE, f), os.path.join(OUT, "assets", f))
+    for f in ("favicon.ico", "favicon.svg", "apple-touch-icon.png",
+              "icon-512.png", "social-card.png"):
+        shutil.copy(os.path.join(HERE, f), os.path.join(OUT, f))
 
     pages = sum(1 for _, _, fs in os.walk(OUT) for f in fs if f.endswith(".html"))
     print("pages: %d, sitemap urls: %d" % (pages, n))

@@ -42,3 +42,19 @@ plus /assets/site.css, /assets/site.js, /assets/catalogue.js, /sitemap.xml and /
 - Ramuz's biography lists his six Skomlin titles on each book page but not on his own
   contributor page, where the introduction and the grid already cover them.
 - "Marianna Rychlowska" is a pen name.
+
+## Brand marks
+
+`assets/logo-eagle.svg` (bird only) and `assets/logo-lockup.svg` (bird over SKOMLIN) are
+vector tracings of the Skomlin eagle. The eagle is used in the site header and the home
+hero; the lockup is used in the footer colophon. They are plain single-path SVGs in
+crimson #8B1A1A with transparent backgrounds, so they sit on any ground and scale cleanly.
+
+## Icons and social card
+
+- `favicon.ico` holds three sizes. 16px is a Garamond S, because the eagle is unreadable
+  that small; 32 and 48px are the eagle in cream on crimson. Browsers pick per context.
+- `favicon.svg` is the eagle, used by modern browsers at larger sizes.
+- `apple-touch-icon.png` (180px) and `icon-512.png` are the eagle on crimson.
+- `social-card.png` (1200x630) is what appears when a link is shared. Rebuild it from
+  `card.html` if the strapline changes.
