@@ -408,6 +408,10 @@ a.book-card{display:block; color:inherit; text-decoration:none;}
 .trade-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:50px; align-items:flex-start;}
 @media (max-width:800px){.trade-grid{grid-template-columns:1fr;}}
 .detail h2{font-variant:small-caps; letter-spacing:0.08em; color:var(--crimson); font-size:1.05rem; margin-bottom:16px;}
+.person-essay{margin-top:40px; padding-top:28px; border-top:1px solid var(--rule);}
+.person-essay h2{font-variant:small-caps; letter-spacing:0.08em; color:var(--crimson); font-size:1.05rem; font-weight:600; margin:0 0 4px;}
+.person-essay .essay-source{font-size:0.9rem; color:var(--slate-light); font-style:italic; margin:0 0 18px;}
+.person-essay p{margin:0 0 1.1em;}
 .news-wrap{max-width:680px; margin:0 auto;}
 .news-item{padding:0 0 30px; margin-bottom:30px; border-bottom:1px solid var(--rule);}
 .news-item:last-child{border-bottom:none;}

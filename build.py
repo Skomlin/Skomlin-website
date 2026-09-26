@@ -34,6 +34,10 @@ try:
     INTROS = load("intros.json")
 except IOError:
     INTROS = {}
+try:
+    ESSAYS = load("essays.json")   # slug -> {"heading", "source", "html"}; long essays on contributor pages
+except IOError:
+    ESSAYS = {}
 
 BY_SLUG = {b["slug"]: b for b in BOOKS}
 E = lambda s: html.escape(s or "", quote=True)
@@ -508,6 +512,12 @@ def build_person(slug, c):
     intro = INTROS.get(slug)
     intro_html = '<p class="person-intro">%s</p>' % E(intro) if intro else ""
     bio_html = ('<div class="contrib-bio"><p>%s</p></div>' % E(c["bio"])) if c.get("bio") else ""
+    essay = ESSAYS.get(slug)
+    if essay:
+        bio_html += ('<div class="contrib-bio person-essay"><h2>%s</h2>%s%s</div>'
+                     % (E(essay.get("heading") or "About the author"),
+                        ('<p class="essay-source">%s</p>' % E(essay["source"])) if essay.get("source") else "",
+                        essay["html"]))
     body = """<div class="contrib-header">
   <div class="eyebrow">%(roles)s</div>
   <h1>%(name)s</h1>
@@ -681,6 +691,10 @@ a.book-card{display:block; color:inherit; text-decoration:none;}
 .trade-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:50px; align-items:flex-start;}
 @media (max-width:800px){.trade-grid{grid-template-columns:1fr;}}
 .detail h2{font-variant:small-caps; letter-spacing:0.08em; color:var(--crimson); font-size:1.05rem; margin-bottom:16px;}
+.person-essay{margin-top:40px; padding-top:28px; border-top:1px solid var(--rule);}
+.person-essay h2{font-variant:small-caps; letter-spacing:0.08em; color:var(--crimson); font-size:1.05rem; font-weight:600; margin:0 0 4px;}
+.person-essay .essay-source{font-size:0.9rem; color:var(--slate-light); font-style:italic; margin:0 0 18px;}
+.person-essay p{margin:0 0 1.1em;}
 .news-wrap{max-width:680px; margin:0 auto;}
 .news-item{padding:0 0 30px; margin-bottom:30px; border-bottom:1px solid var(--rule);}
 .news-item:last-child{border-bottom:none;}
@@ -832,7 +846,10 @@ def main():
     shutil.copy(os.path.abspath(__file__), os.path.join(OUT, "build.py"))
     shutil.copy(os.path.join(HERE, "site.css.orig"), os.path.join(OUT, "site.css.orig"))
     for f in ("logo-eagle.svg", "logo-lockup.svg"):
-        shutil.copy(os.path.join(HERE, f), os.path.join(OUT, "assets", f))
+        src = os.path.join(HERE, f)
+        if not os.path.exists(src):          # in the repo the logos live in assets/
+            src = os.path.join(HERE, "assets", f)
+        shutil.copy(src, os.path.join(OUT, "assets", f))
     for f in ("favicon.ico", "favicon.svg", "apple-touch-icon.png",
               "icon-512.png", "social-card.png"):
         shutil.copy(os.path.join(HERE, f), os.path.join(OUT, f))
