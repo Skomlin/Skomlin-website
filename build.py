@@ -139,7 +139,7 @@ FOOTER = """</main>
 <footer class="colophon">
   <div class="wrap">
     %(lockup)s
-    <div class="cl">Set in EB Garamond. World literature in translation, printed on demand.</div>
+    <div class="cl">Set in EB Garamond. World literature in English. Every title stays in print.</div>
     <div style="width:100%%; max-width:480px; margin-top:4px;">
       <div class="eyebrow" style="margin-bottom:10px;">New titles &amp; reading notes</div>
       <form class="signup-form" data-ctx="reader" method="POST" target="skomlin-sink" action="%(reader)s" onsubmit="return handleSignup(event)" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
@@ -306,14 +306,58 @@ DESC_HOME = ("Skomlin Press publishes classic and contemporary literature in tra
              "novellas from Poland, Switzerland, Russia, France and beyond, in English editions built "
              "to be read again.")
 
+LANGUAGES = [  # order on the home page; sample authors shown under each
+    ("French", "Ramuz, Proust, Balzac"),
+    ("Russian", "Turgenev, Leskov, Andreyev"),
+    ("Polish", "Kraszewski, Reymont, Tańska"),
+    ("German", "Hesse, Mann"),
+    ("Spanish", "Baroja"),
+    ("English", "Joyce, Dos Passos, Pickthall"),
+]
+FEATURED_TRANSLATORS = [  # living translators the press has worked with directly
+    ("bailat-jones-michelle", "Novelist and translator, based in Switzerland"),
+    ("marxsen-patti-m", "Essayist, biographer and translator"),
+    ("spinney-laura", "Science writer and novelist, based in Paris"),
+    ("weeks-john", "Scholar of Slavic literature and translator"),
+    ("moscato-laurence", "Translator from French, based in New York"),
+]
+RAMUZ = "ramuz-charles-ferdinand"
+
+def language_row():
+    tiles = []
+    for lang, sample in LANGUAGES:
+        n = sum(1 for b in BOOKS if b.get("language") == lang)
+        if not n:
+            continue
+        tiles.append("""    <a class="lang-tile" href="/catalogue/?lang=%s">
+      <span class="lang-name">%s</span>
+      <span class="lang-count">%d title%s</span>
+      <span class="lang-sample">%s</span>
+    </a>
+""" % (E(lang), E(lang), n, "" if n == 1 else "s", E(sample)))
+    return '  <nav class="lang-row" aria-label="Browse by original language">\n%s  </nav>\n' % "".join(tiles)
+
 def build_home():
-    featured = BOOKS[:6]
+    ramuz_books = [b for b in BOOKS if any(c["slug"] == RAMUZ for c in b["contributors"])]
+    tiles = []
+    for slug, line in FEATURED_TRANSLATORS:
+        c = CONTRIBUTORS.get(slug)
+        if not c:
+            continue
+        titles = ", ".join(bk["title"] for bk in c["books"] if bk.get("role") == "Translator")
+        tiles.append("""      <a class="contrib-tile" href="/people/%s/">
+        <div class="ct-name">%s</div>
+        <div class="ct-roles small-caps">%s</div>
+        <div class="ct-count">%s</div>
+      </a>
+""" % (slug, E(display_name(c["name"])), E(titles), E(line)))
+    langs = [l for l, _ in LANGUAGES if any(b.get("language") == l for b in BOOKS)]
     body = """<section class="hero">
-  %s
-  <div class="eyebrow">World Literature in Translation</div>
-  <h1>Books built to be read again.</h1>
-  <p class="lede">Skomlin Press publishes classic and contemporary literature from Poland, Switzerland, Russia, France and beyond, brought into English by translators who treat the work as their own.</p>
-  <div class="btn-row">
+  %(mark)s
+  <div class="eyebrow">World Literature in English</div>
+  <h1>%(nlang)s languages, one shelf.</h1>
+  <p class="lede">Novels and novellas from French, Russian, Polish, German and Spanish, alongside English classics that belong beside them. Every title stays in print.</p>
+%(langrow)s  <div class="btn-row">
     <a class="btn btn-primary" href="/catalogue/">Browse the Catalogue</a>
     <a class="btn btn-outline" href="/trade/">For Booksellers</a>
   </div>
@@ -322,13 +366,29 @@ def build_home():
 <section class="block">
   <div class="wrap">
     <div class="block-head">
-      <div class="eyebrow">Recently Added</div>
-      <h2>From the Shelf</h2>
+      <div class="eyebrow">Charles-Ferdinand Ramuz in English</div>
+      <h2>Six books by Switzerland's great novelist</h2>
     </div>
+    <p class="section-lede">Ramuz wrote <em>Histoire du soldat</em> with Stravinsky, and his face was on the Swiss 200-franc note, yet English readers have barely met him. Five of the six are new translations, and two appear in English for the first time.</p>
     <div class="shelf">
-%s    </div>
+%(ramuz)s    </div>
     <div style="text-align:center; margin-top:40px;">
-      <a class="btn btn-outline" href="/catalogue/">View Full Catalogue (%d Titles)</a>
+      <a class="btn btn-outline" href="/people/%(ramuzslug)s/">About Ramuz</a>
+    </div>
+  </div>
+</section>
+
+<section class="block translators-band">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="eyebrow">The Translators</div>
+      <h2>Translated, and credited</h2>
+    </div>
+    <p class="section-lede">Our living translators are named on the cover. Every translator on the list, from Constance Garnett to the translators working with the press today, has a page of their own.</p>
+    <div class="contrib-grid">
+%(tiles)s    </div>
+    <div style="text-align:center; margin-top:40px;">
+      <a class="btn btn-outline" href="/contributors/">All Translators &amp; Authors</a>
     </div>
   </div>
 </section>
@@ -341,10 +401,13 @@ def build_home():
       <p>Skomlin Press distributes through Ingram / Lightning Source International, publisher ID 6060282. Order any title by ISBN through iPage, by EDI, or by calling 1-800-937-8000. Sign up to receive sell sheets and new title announcements.</p>
       <div style="margin-top:22px;"><a class="btn" style="border-color:var(--cream); color:var(--cream);" href="/trade/">Ordering Information</a></div>
     </div>
-    <div class="form-card">%s</div>
+    <div class="form-card">%(form)s</div>
   </div>
 </section>
-""" % (logo("eagle", "hero-mark"), "".join(book_card(b) for b in featured), len(BOOKS), signup_form("home"))
+""" % dict(mark=logo("eagle", "hero-mark"),
+           nlang={1:"One",2:"Two",3:"Three",4:"Four",5:"Five",6:"Six",7:"Seven",8:"Eight"}.get(len(langs), str(len(langs))),
+           langrow=language_row(), ramuz="".join(book_card(b) for b in ramuz_books),
+           ramuzslug=RAMUZ, tiles="".join(tiles), form=signup_form("home"))
 
     ld = ('<script type="application/ld+json">%s</script>\n' % json.dumps({
         "@context": "https://schema.org", "@type": "Organization",
@@ -352,7 +415,7 @@ def build_home():
         "logo": SITE + "/social-card.png",
         "description": DESC_HOME}, ensure_ascii=False))
 
-    write("index.html", page("Skomlin Press, World Literature in Translation", DESC_HOME,
+    write("index.html", page("Skomlin Press, World Literature in English", DESC_HOME,
                              SITE + "/", body, active=None, extra=ld))
 
 def build_catalogue():
@@ -374,6 +437,10 @@ def build_catalogue():
         <select id="catRole"><option value="">All roles</option>%s</select>
       </div>
       <div class="field">
+        <label for="catLang">Original Language</label>
+        <select id="catLang"><option value="">All languages</option>%s</select>
+      </div>
+      <div class="field">
         <label for="catSeries">Series</label>
         <select id="catSeries"><option value="">All series</option>%s</select>
       </div>
@@ -388,6 +455,8 @@ def build_catalogue():
   </div>
 </section>
 """ % ("".join('<option value="%s">%s</option>' % (E(r), E(r)) for r in roles),
+       "".join('<option value="%s">%s</option>' % (E(l), E(l)) for l, _ in LANGUAGES
+               if any(b.get("language") == l for b in BOOKS)),
        "".join('<option value="%s">%s</option>' % (E(s), E(s)) for s in series),
        len(BOOKS),
        "".join(catalogue_card(b) for b in BOOKS))
@@ -412,7 +481,7 @@ def catalogue_card(book):
         book["title"], book.get("keywords") or "", book.get("short_description") or "",
         " ".join(c["name"] for c in book["contributors"])])).lower()
     roles = "|".join(sorted({c["role"] for c in book["contributors"] if c.get("role")}))
-    return """      <a class="book-card" href="/books/%s/" data-roles="%s" data-series="%s" data-search="%s">
+    return """      <a class="book-card" href="/books/%s/" data-roles="%s" data-lang="%s" data-series="%s" data-search="%s">
         %s
         <div class="meta">
           <div class="t">%s</div>
@@ -420,7 +489,7 @@ def catalogue_card(book):
         </div>
         <p class="card-blurb">%s</p>
       </a>
-""" % (book["slug"], E(roles), E(book.get("series") or ""), E(haystack), cover_img(book),
+""" % (book["slug"], E(roles), E(book.get("language") or ""), E(book.get("series") or ""), E(haystack), cover_img(book),
        E(book["title"]), E(primary_authors(book)), E(book.get("short_description") or ""))
 
 def build_book(book):
@@ -585,32 +654,41 @@ def build_trade():
     write("trade/index.html", page("Ordering & Trade | Skomlin Press", desc,
                                    SITE + "/trade/", body, active="trade"))
 
+PRACTICES = [
+    ("Permanence", 'Every Skomlin title stays in print. All are available to order today.'),
+    ("Rigour", '<a href="/books/the-comedienne/"><em>The Com&eacute;dienne</em></a> carries more than 500 corrections to its 1920 translation. In <a href="/books/oriental-encounters/"><em>Oriental Encounters</em></a>, a publisher&rsquo;s note explains why Pickthall&rsquo;s thee and thou became you.'),
+    ("Credit", 'We honour all our current translators and prominently attribute them on each cover. Translators&rsquo; biographies are listed on <a href="/contributors/">our site</a>.'),
+    ("Context", 'Many older titles carry an essay or introduction that gives readers what the original audiences already knew, from the Warsaw garden theatres of the 1890s to <a href="/people/pickthall-marmaduke/">Pickthall&rsquo;s life in the East</a>.'),
+    ("Discovery", 'Skomlin publishes six books by <a href="/people/ramuz-charles-ferdinand/">Charles-Ferdinand Ramuz</a>, five of them in new translations: <em>Beauty on Earth</em>, <em>Derborence</em>, <em>Farinet&rsquo;s Gold</em>, <em>What if the sun...</em> and <em>Riversong of the Rh&ocirc;ne</em>. The last two appear in English for the first time.'),
+]
+
 def build_about():
+    rows = "".join("""      <div class="practice">
+        <div class="practice-name">%s</div>
+        <p>%s</p>
+      </div>
+""" % (E(name), text) for name, text in PRACTICES)
     body = """<section class="hero" style="padding-bottom:10px;">
   <div class="eyebrow">The Press</div>
   <h1>About Skomlin Press</h1>
 </section>
 <section class="block">
   <div class="about-copy">
-    <p>Skomlin Press publishes classic and contemporary literature in translation, novels and novellas from Poland, Switzerland, Russia, France and beyond, brought into English by translators who treat the work as their own rather than a service rendered.</p>
-    <p>The list favours books that reward rereading over books built for a single sitting: forgotten classics restored to print, and newer work chosen with the same standard.</p>
-    <h2>What We Value</h2>
-    <div class="values-row">
-      <div class="value-chip"><div class="vt">Permanence</div></div>
-      <div class="value-chip"><div class="vt">Rigour</div></div>
-      <div class="value-chip"><div class="vt">Craft</div></div>
-      <div class="value-chip"><div class="vt">Restraint</div></div>
-      <div class="value-chip"><div class="vt">Heritage</div></div>
-    </div>
+    <p>Skomlin Press publishes world literature in English: novels and novellas from French, Russian, Polish, German and Spanish, alongside English classics that belong beside them. The list favours books that reward rereading, forgotten classics restored to print and important newer work.</p>
+    <h2>The Name</h2>
+    <p>Skomlin is a village in central Poland, where the press has its ancestral and cultural roots. The press began as Onesuch Press, a play on the Nonesuch Press. We took the name Skomlin to reflect our European leanings and readership.</p>
+    <h2>How We Make Books</h2>
+    <div class="practice-list">
+%(rows)s    </div>
     <h2>The Catalogue</h2>
-    <p>%d titles are currently in print, spanning literary fiction, novellas and a long-running commitment to Charles-Ferdinand Ramuz, six of whose novels appear in English from Skomlin. Browse the <a href="/catalogue/">full catalogue</a> or read about the <a href="/contributors/">translators and authors</a> behind it.</p>
+    <p>Over 30 titles are in print. Browse the <a href="/catalogue/">full catalogue</a> by original language, or meet the <a href="/contributors/">translators and authors</a> behind them.</p>
     <h2>Getting in Touch</h2>
-    <p>Booksellers will find ordering details on the <a href="/trade/">trade page</a>. Announcements of new titles appear on the <a href="/news/">news page</a> and go first to the mailing list below.</p>
+    <p>Booksellers will find ordering details on the <a href="/trade/">trade page</a>. Announcements of new titles appear on the <a href="/news/">news page</a> and in our mailing lists.</p>
   </div>
 </section>
-""" % len(BOOKS)
-    desc = ("Skomlin Press is a small literary imprint publishing classic and contemporary European "
-            "literature in English translation, with %d titles in print." % len(BOOKS))
+""" % {"rows": rows}
+    desc = ("Skomlin Press publishes world literature in English, with %d titles in print from French, "
+            "Russian, Polish, German, Spanish and English. Every title stays in print." % len(BOOKS))
     write("about/index.html", page("About | Skomlin Press", desc, SITE + "/about/", body, active="about"))
 
 def build_news():
@@ -695,6 +773,23 @@ a.book-card{display:block; color:inherit; text-decoration:none;}
 .person-essay h2{font-variant:small-caps; letter-spacing:0.08em; color:var(--crimson); font-size:1.05rem; font-weight:600; margin:0 0 4px;}
 .person-essay .essay-source{font-size:0.9rem; color:var(--slate-light); font-style:italic; margin:0 0 18px;}
 .person-essay p{margin:0 0 1.1em;}
+.lang-row{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; max-width:760px; margin:6px auto 34px;}
+@media (max-width:600px){.lang-row{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;}}
+.lang-tile{display:block; padding:16px 12px 14px; background:var(--white); border:1px solid var(--rule); text-decoration:none; color:inherit; text-align:center; transition:border-color .15s, transform .15s;}
+.lang-tile:hover{border-color:var(--crimson); transform:translateY(-2px);}
+.lang-name{display:block; font-style:italic; font-size:1.45rem; color:var(--crimson); line-height:1.2;}
+.lang-count{display:block; font-variant:small-caps; letter-spacing:0.1em; font-size:0.82rem; font-weight:600; color:var(--slate); margin-top:4px;}
+.lang-sample{display:block; font-size:0.84rem; color:var(--slate-light); margin-top:4px; line-height:1.4;}
+.translators-band{background:var(--cream-deep); border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);}
+.translators-band .contrib-tile{background:var(--white);}
+.translators-band .contrib-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));}
+.practice-list{margin:8px 0 10px; border-bottom:1px solid var(--rule);}
+.practice{display:grid; grid-template-columns:150px 1fr; gap:20px; padding:18px 0; border-top:1px solid var(--rule);}
+.practice-name{font-variant:small-caps; letter-spacing:0.08em; font-weight:700; color:var(--crimson); padding-top:2px;}
+.practice p{margin:0; line-height:1.7;}
+.about-copy a{color:var(--crimson); border-bottom:1px solid transparent;}
+.about-copy a:hover{border-color:var(--crimson);}
+@media (max-width:600px){.practice{grid-template-columns:1fr; gap:4px;}}
 .news-wrap{max-width:680px; margin:0 auto;}
 .news-item{padding:0 0 30px; margin-bottom:30px; border-bottom:1px solid var(--rule);}
 .news-item:last-child{border-bottom:none;}
@@ -765,6 +860,7 @@ function handleSignup(e){
   var search = document.getElementById('catSearch');
   var roleSel = document.getElementById('catRole');
   var seriesSel = document.getElementById('catSeries');
+  var langSel = document.getElementById('catLang');
   var grid = document.getElementById('catGrid');
   var empty = document.getElementById('catEmpty');
   var count = document.getElementById('catCount');
@@ -776,11 +872,13 @@ function handleSignup(e){
     var q = (search.value || '').trim().toLowerCase();
     var role = roleSel.value;
     var ser = seriesSel.value;
+    var lang = langSel ? langSel.value : '';
     var shown = 0;
     cards.forEach(function(card){
       var ok = true;
       if(role && (card.getAttribute('data-roles') || '').split('|').indexOf(role) === -1) ok = false;
       if(ok && ser && card.getAttribute('data-series') !== ser) ok = false;
+      if(ok && lang && card.getAttribute('data-lang') !== lang) ok = false;
       if(ok && q && (card.getAttribute('data-search') || '').indexOf(q) === -1) ok = false;
       card.classList.toggle('hidden', !ok);
       if(ok) shown++;
@@ -792,6 +890,20 @@ function handleSignup(e){
   search.addEventListener('input', draw);
   roleSel.addEventListener('change', draw);
   seriesSel.addEventListener('change', draw);
+  if(langSel){
+    var m = /[?&]lang=([^&]+)/.exec(location.search);
+    if(m){
+      var v = decodeURIComponent(m[1].replace(/\\+/g, ' '));
+      for(var i = 0; i < langSel.options.length; i++){
+        if(langSel.options[i].value === v){ langSel.value = v; break; }
+      }
+    }
+    langSel.addEventListener('change', function(){
+      var url = langSel.value ? '?lang=' + encodeURIComponent(langSel.value) : location.pathname;
+      if(window.history && history.replaceState) history.replaceState(null, '', url);
+      draw();
+    });
+  }
   draw();
 })();
 """)
